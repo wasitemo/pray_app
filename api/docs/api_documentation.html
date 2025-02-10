@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dokumentasi API Waktu Sholat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        code {
+            background: #ecf0f1;
+            padding: 5px;
+            border-radius: 5px;
+            font-family: "Courier New", monospace;
+        }
+        pre {
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        ul {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📌 API Waktu Sholat</h1>
+        <p>API ini digunakan untuk mendapatkan waktu sholat berdasarkan lokasi, latitude, longitude, dan tanggal.</p>
+        
+        <h2>🔹 Endpoint</h2>
+        <p><code>GET http://localhost/api-waktu-sholat/public/index.php</code></p>
+        
+        <h2>🔹 Parameter</h2>
+        <ul>  
+            <li>Anda bisa memilih menggunakan <strong>lokasi</strong> atau <strong>latitude dan longitude</strong>:</li>
+            <li><strong>Jika menggunakan lokasi:</strong></li>
+            <ul>
+                <li><strong>lokasi</strong> (string) - Nama lokasi (opsional, jika tidak menggunakan latitude & longitude)</li>
+            </ul>
+            <li><strong>Jika menggunakan latitude dan longitude:</strong></li>
+            <ul>
+                <li><strong>latitude</strong> (float) - Koordinat lintang (opsional)</li>
+                <li><strong>longitude</strong> (float) - Koordinat bujur (opsional)</li>
+            </ul>
+            <li><strong>tanggal</strong> (YYYY-MM-DD) - Format: tahun-bulan-hari (wajib diisi)</li>
+        </ul>
+        
+        <h2>🔹 Contoh Request</h2>
+        <p><code>GET http://localhost/api-waktu-sholat/public/index.php?lokasi=Jakarta&tanggal=2025-02-10</code></p>
+        <p><code>GET http://localhost/api-waktu-sholat/public/index.php?latitude=-6.2088&longitude=106.8456&tanggal=2025-02-10</code></p>
+        
+        <h2>🔹 Contoh Response</h2>
+        <pre>
+{
+    "status": "success",
+    "kota": "Jakarta",
+    "data": {
+        "subuh": "04:30",
+        "dzuhur": "12:10",
+        "ashar": "15:20",
+        "maghrib": "18:00",
+        "isya": "19:20"
+    }
+}
+        </pre>
+    </div>
+</body>
+</html>
