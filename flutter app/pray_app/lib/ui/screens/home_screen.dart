@@ -13,7 +13,7 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: prayState.when(
-            data: (prayTime) => Text(prayTime.kota),
+            data: (prayTime) => Text(prayTime.lokasi),
             error: (error, stack) => Text('Tidak dapat menemukan kota'),
             loading: () => const CircularProgressIndicator()),
         actions: [
@@ -25,17 +25,15 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-          child: Center(
-        child: prayState.when(
-          data: (prayTime) => PrayTimeCard(prayTime: prayTime),
-          error: (error, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Text(error.toString()),
-            ),
+          child: prayState.when(
+        data: (prayTime) => PrayTimeCard(prayTime: prayTime),
+        error: (error, stack) => Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Text(error.toString()),
           ),
-          loading: () => const CircularProgressIndicator(),
         ),
+        loading: () => const CircularProgressIndicator(),
       )),
     );
   }

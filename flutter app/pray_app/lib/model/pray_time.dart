@@ -1,5 +1,5 @@
 class PrayTime {
-  final String kota;
+  final String lokasi;
   final String subuh;
   final String dzuhur;
   final String ashar;
@@ -7,7 +7,7 @@ class PrayTime {
   final String isya;
 
   const PrayTime({
-    required this.kota,
+    required this.lokasi,
     required this.subuh,
     required this.dzuhur,
     required this.ashar,

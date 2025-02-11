@@ -16,6 +16,7 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
       PermissionStatus permissionGranted;
       LocationData locationData;
 
+      // Periksa apakah layanan lokasi aktif
       serviceEnabled = await location.serviceEnabled();
       if (!serviceEnabled) {
         serviceEnabled = await location.requestService();
@@ -25,6 +26,7 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
         await Future.delayed(Duration(seconds: 2));
       }
 
+      // Periksa apakah izin lokasi diberikan
       permissionGranted = await location.hasPermission();
       if (permissionGranted == PermissionStatus.denied) {
         permissionGranted = await location.requestPermission();
@@ -33,10 +35,12 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
         }
       }
 
+      // Ambil lokasi pengguna
       locationData = await location.getLocation();
-
       final latitude = locationData.latitude;
       final longitude = locationData.longitude;
+
+      // Format tanggal
       final formattedDate =
           "${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}";
 
@@ -52,27 +56,24 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
-        print(jsonData);
+        // Parsing data
+        final lokasi = jsonData['data']['lokasi'].toString();
+        final subuh = jsonData['data']['subuh'].toString();
+        final dzuhur = jsonData['data']['dzuhur'].toString();
+        final ashar = jsonData['data']['ashar'].toString();
+        final maghrib = jsonData['data']['maghrib'].toString();
+        final isya = jsonData['data']['isya'].toString();
 
-        if (jsonData == null || jsonData['data'] == null) {
-          state = AsyncValue.error("API data not found", StackTrace.current);
-        }
-
-        final kota = jsonData['kota'];
-        final subuh = jsonData['data']['subuh'];
-        final dzuhur = jsonData['data']['dzuhur'];
-        final ashar = jsonData['data']['ashar'];
-        final maghrib = jsonData['data']['maghrib'];
-        final isya = jsonData['data']['isya'];
-
+        // Perbarui state
         state = AsyncValue.data(
           PrayTime(
-              kota: kota,
-              subuh: subuh,
-              dzuhur: dzuhur,
-              ashar: ashar,
-              maghrib: maghrib,
-              isya: isya),
+            lokasi: lokasi,
+            subuh: subuh,
+            dzuhur: dzuhur,
+            ashar: ashar,
+            maghrib: maghrib,
+            isya: isya,
+          ),
         );
       } else {
         state = AsyncValue.error(
