@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET') {
         exit;
     }
 
-    $stmt = $pdo->prepare("SELECT subuh, dzuhur, ashar, maghrib, isya FROM jadwal_sholat WHERE lokasi = ? AND tanggal = ?");
+    $stmt = $pdo->prepare("SELECT * FROM jadwal_sholat WHERE lokasi = ? AND tanggal = ?");
     $stmt->execute([$lokasi, $tanggal]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
