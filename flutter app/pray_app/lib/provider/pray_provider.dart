@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +7,9 @@ import 'package:location/location.dart';
 import 'package:pray_app/model/pray_time.dart';
 
 class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
-  PrayNotifier() : super(const AsyncValue.loading());
+  PrayNotifier() : super(const AsyncValue.loading()) {
+    loadData();
+  }
 
   Future<void> loadData() async {
     try {
@@ -53,20 +56,27 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
 
       final response = await http.get(url);
 
+      //get current time
+      final DateTime now = DateTime.now();
+      final currentDay = DateTime(now.day);
+      final currentDate = DateTime(now.year, now.month, now.day);
+
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
 
         // Parsing data
-        final lokasi = jsonData['data']['lokasi'].toString();
-        final subuh = jsonData['data']['subuh'].toString();
-        final dzuhur = jsonData['data']['dzuhur'].toString();
-        final ashar = jsonData['data']['ashar'].toString();
-        final maghrib = jsonData['data']['maghrib'].toString();
-        final isya = jsonData['data']['isya'].toString();
+        final lokasi = jsonData['data']['lokasi'];
+        final subuh = jsonData['data']['subuh'];
+        final dzuhur = jsonData['data']['dzuhur'];
+        final ashar = jsonData['data']['ashar'];
+        final maghrib = jsonData['data']['maghrib'];
+        final isya = jsonData['data']['isya'];
 
         // Perbarui state
         state = AsyncValue.data(
           PrayTime(
+            hari: currentDay,
+            tanggal: currentDate,
             lokasi: lokasi,
             subuh: subuh,
             dzuhur: dzuhur,
@@ -87,5 +97,5 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
 
 final prayTimeProvider =
     StateNotifierProvider<PrayNotifier, AsyncValue<PrayTime>>((ref) {
-  return PrayNotifier()..loadData();
+  return PrayNotifier();
 });
