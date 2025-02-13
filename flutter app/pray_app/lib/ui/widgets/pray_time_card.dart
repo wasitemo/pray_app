@@ -17,6 +17,8 @@ class PrayTimeCard extends StatefulWidget {
 
 class _PrayTimeCardState extends State<PrayTimeCard> {
   String closestPrayer = "";
+  Duration timeUntilNextPrayer = Duration.zero;
+  late Timer countdownTimer;
 
   @override
   void initState() {
@@ -28,13 +30,24 @@ class _PrayTimeCardState extends State<PrayTimeCard> {
   void _updateClosestPrayer() {
     setState(() {
       closestPrayer = widget.prayTime.getClosestPrayer();
+      timeUntilNextPrayer = widget.prayTime.getTimeUntilNextPrayer();
     });
   }
 
   void _startTimer() {
-    Timer.periodic(Duration(minutes: 1), (timer) {
-      _updateClosestPrayer();
+    countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          timeUntilNextPrayer = widget.prayTime.getTimeUntilNextPrayer();
+        });
+      }
     });
+  }
+
+  @override
+  void dispose() {
+    countdownTimer.cancel();
+    super.dispose();
   }
 
   Widget buildPrayerRow(String prayerName, String prayerTime) {
@@ -65,6 +78,24 @@ class _PrayTimeCardState extends State<PrayTimeCard> {
     );
   }
 
+  Widget buildCountdown() {
+    final hours = timeUntilNextPrayer.inHours;
+    final minutes =
+        (timeUntilNextPrayer.inMinutes % 60).toString().padLeft(2, '0');
+    final seconds =
+        (timeUntilNextPrayer.inSeconds % 60).toString().padLeft(2, '0');
+
+    return Center(
+      child: Text(
+        'Waktu menuju $closestPrayer: $hours:$minutes:$seconds',
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -79,6 +110,7 @@ class _PrayTimeCardState extends State<PrayTimeCard> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          buildCountdown(),
           buildPrayerRow('Subuh', widget.prayTime.subuh),
           buildPrayerRow('Dzuhur', widget.prayTime.dzuhur),
           buildPrayerRow('Ashar', widget.prayTime.ashar),

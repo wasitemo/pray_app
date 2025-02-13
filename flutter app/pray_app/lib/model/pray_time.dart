@@ -68,4 +68,23 @@ class PrayTime {
 
     return closestPrayer;
   }
+
+  Duration getTimeUntilNextPrayer() {
+    final now = DateTime.now();
+    final prayerTimes = [
+      getPrayerTime(subuh),
+      getPrayerTime(dzuhur),
+      getPrayerTime(ashar),
+      getPrayerTime(maghrib),
+      getPrayerTime(isya),
+    ];
+
+    for (var prayerTime in prayerTimes) {
+      if (prayerTime.isAfter(now)) {
+        return prayerTime.difference(now);
+      }
+    }
+
+    return Duration.zero; // Jika semua waktu shalat sudah lewat
+  }
 }
