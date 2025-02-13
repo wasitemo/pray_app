@@ -3,13 +3,21 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import 'package:pray_app/model/pray_time.dart';
+
+final formatterDate = DateFormat('dd, MMMM yyyy');
+final formatterDay = DateFormat('EEEE');
 
 class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
   PrayNotifier() : super(const AsyncValue.loading()) {
     loadData();
   }
+
+  Timer? countdownTimer;
+  String closestPrayer = "";
+  Duration timeUntilNextPrayer = Duration.zero;
 
   Future<void> loadData() async {
     try {
@@ -72,19 +80,19 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
         final maghrib = jsonData['data']['maghrib'];
         final isya = jsonData['data']['isya'];
 
-        // Perbarui state
-        state = AsyncValue.data(
-          PrayTime(
-            hari: currentDay,
-            tanggal: currentDate,
-            lokasi: lokasi,
-            subuh: subuh,
-            dzuhur: dzuhur,
-            ashar: ashar,
-            maghrib: maghrib,
-            isya: isya,
-          ),
+        final data = PrayTime(
+          hari: currentDay,
+          tanggal: currentDate,
+          lokasi: lokasi,
+          subuh: subuh,
+          dzuhur: dzuhur,
+          ashar: ashar,
+          maghrib: maghrib,
+          isya: isya,
         );
+
+        state = AsyncValue.data(data);
+        updateClosestPrayer(data);
       } else {
         state = AsyncValue.error(
             "Failed to fetch data: ${response.statusCode}", StackTrace.current);
@@ -92,6 +100,61 @@ class PrayNotifier extends StateNotifier<AsyncValue<PrayTime>> {
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
     }
+  }
+
+  void updateClosestPrayer(PrayTime prayTime) {
+    final now = DateTime.now();
+    final prayerTimes = {
+      "Subuh": getPrayerTime(prayTime.subuh, prayTime.tanggal),
+      "Dzuhur": getPrayerTime(prayTime.dzuhur, prayTime.tanggal),
+      "Ashar": getPrayerTime(prayTime.ashar, prayTime.tanggal),
+      "Maghrib": getPrayerTime(prayTime.maghrib, prayTime.tanggal),
+      "Isya": getPrayerTime(prayTime.isya, prayTime.tanggal),
+    };
+
+    String nextPrayer = "Subuh";
+    Duration minDiff = Duration(hours: 24);
+
+    for (var entry in prayerTimes.entries) {
+      final diff = entry.value.difference(now);
+      if (diff.isNegative) continue;
+
+      if (diff < minDiff) {
+        minDiff = diff;
+        nextPrayer = entry.key;
+      }
+    }
+
+    closestPrayer = nextPrayer;
+    timeUntilNextPrayer = minDiff;
+
+    startCountdown();
+  }
+
+  DateTime getPrayerTime(String prayerTime, DateTime tanggal) {
+    final parts = prayerTime.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
+    return DateTime(tanggal.year, tanggal.month, tanggal.day, hour, minute);
+  }
+
+  void startCountdown() {
+    countdownTimer?.cancel();
+    countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      if (timeUntilNextPrayer > Duration.zero) {
+        timeUntilNextPrayer -= Duration(seconds: 1);
+      } else {
+        timer.cancel();
+        loadData();
+      }
+      state = AsyncValue.data(state.value!);
+    });
+  }
+
+  @override
+  void dispose() {
+    countdownTimer?.cancel();
+    super.dispose();
   }
 }
 

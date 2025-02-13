@@ -26,7 +26,7 @@ class HomeScreen extends ConsumerWidget {
             SizedBox(
               height: 20,
             ),
-            PrayTimeCard(prayTime: prayTime),
+            PrayTimeCard(),
           ],
         ),
         error: (error, stack) => Center(

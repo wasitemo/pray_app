@@ -1,44 +1,46 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:pray_app/model/pray_time.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pray_app/provider/pray_provider.dart';
 
-class PrayTimeCard extends StatefulWidget {
+class PrayTimeCard extends ConsumerStatefulWidget {
   const PrayTimeCard({
     super.key,
-    required this.prayTime,
   });
 
-  final PrayTime prayTime;
-
   @override
-  State<PrayTimeCard> createState() => _PrayTimeCardState();
+  ConsumerState<PrayTimeCard> createState() => _PrayTimeCardState();
 }
 
-class _PrayTimeCardState extends State<PrayTimeCard> {
+class _PrayTimeCardState extends ConsumerState<PrayTimeCard> {
   String closestPrayer = "";
-  Duration timeUntilNextPrayer = Duration.zero;
-  late Timer countdownTimer;
+  Duration countdown = Duration.zero;
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _updateClosestPrayer();
+    _updateCountdown();
     _startTimer();
   }
 
-  void _updateClosestPrayer() {
+  void _updateCountdown() {
     setState(() {
-      closestPrayer = widget.prayTime.getClosestPrayer();
-      timeUntilNextPrayer = widget.prayTime.getTimeUntilNextPrayer();
+      final prayNotifier = ref.read(prayTimeProvider.notifier);
+      closestPrayer = prayNotifier.closestPrayer;
+      countdown = prayNotifier.timeUntilNextPrayer;
     });
   }
 
   void _startTimer() {
-    countdownTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          timeUntilNextPrayer = widget.prayTime.getTimeUntilNextPrayer();
+          countdown = countdown - Duration(seconds: 1);
+          if (countdown.isNegative) {
+            _updateCountdown();
+          }
         });
       }
     });
@@ -46,7 +48,7 @@ class _PrayTimeCardState extends State<PrayTimeCard> {
 
   @override
   void dispose() {
-    countdownTimer.cancel();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -78,45 +80,57 @@ class _PrayTimeCardState extends State<PrayTimeCard> {
     );
   }
 
-  Widget buildCountdown() {
-    final hours = timeUntilNextPrayer.inHours;
-    final minutes =
-        (timeUntilNextPrayer.inMinutes % 60).toString().padLeft(2, '0');
-    final seconds =
-        (timeUntilNextPrayer.inSeconds % 60).toString().padLeft(2, '0');
-
-    return Center(
-      child: Text(
-        'Waktu menuju $closestPrayer: $hours:$minutes:$seconds',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: EdgeInsets.symmetric(horizontal: 15),
-      padding: EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: Color.fromARGB(255, 253, 222, 103),
-        borderRadius: BorderRadius.circular(26),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          buildCountdown(),
-          buildPrayerRow('Subuh', widget.prayTime.subuh),
-          buildPrayerRow('Dzuhur', widget.prayTime.dzuhur),
-          buildPrayerRow('Ashar', widget.prayTime.ashar),
-          buildPrayerRow('Maghrib', widget.prayTime.maghrib),
-          buildPrayerRow('Isya', widget.prayTime.isya),
-        ],
+    final prayState = ref.watch(prayTimeProvider);
+
+    return prayState.when(
+      data: (prayTime) {
+        return Container(
+          width: double.infinity,
+          margin: EdgeInsets.symmetric(horizontal: 15),
+          padding: EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Color.fromARGB(255, 253, 222, 103),
+            borderRadius: BorderRadius.circular(26),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(
+                  '${countdown.inHours}:${(countdown.inMinutes % 60).toString().padLeft(2, '0')}:${(countdown.inSeconds % 60).toString().padLeft(2, '0')}',
+                  style: Theme.of(context)
+                      .textTheme
+                      .displaySmall
+                      ?.copyWith(color: Colors.black),
+                ),
+              ),
+              Center(
+                child: Text(
+                  'Towards $closestPrayer',
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(color: Colors.black),
+                ),
+              ),
+              SizedBox(
+                height: 10,
+              ),
+              buildPrayerRow('Subuh', prayTime.subuh),
+              buildPrayerRow('Dzuhur', prayTime.dzuhur),
+              buildPrayerRow('Ashar', prayTime.ashar),
+              buildPrayerRow('Maghrib', prayTime.maghrib),
+              buildPrayerRow('Isya', prayTime.isya),
+            ],
+          ),
+        );
+      },
+      error: (err, stack) => Center(child: Text('Error: $err')),
+      loading: () => Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }

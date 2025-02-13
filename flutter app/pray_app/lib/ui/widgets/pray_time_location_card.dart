@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:pray_app/model/pray_time.dart';
 
 class PrayTimeLocationCard extends StatelessWidget {
@@ -33,7 +34,7 @@ class PrayTimeLocationCard extends StatelessWidget {
             height: 18,
           ),
           Text(
-            prayTime.formattedDay,
+            DateFormat('EEEE').format(prayTime.hari),
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
@@ -43,7 +44,7 @@ class PrayTimeLocationCard extends StatelessWidget {
             height: 2,
           ),
           Text(
-            prayTime.formattedDate,
+            DateFormat('dd MMMM yyyy').format(prayTime.tanggal),
             style: Theme.of(context)
                 .textTheme
                 .titleSmall
